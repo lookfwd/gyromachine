@@ -20,7 +20,7 @@ bus.write_byte_data(address, PCA9685_MODE1, oldmode | 0xa0)
 oldmode = bus.read_byte_data(address, PCA9685_MODE1)
 
 on = 0
-off = 2895
+off = 3395
 
 data = [on, on >> 8, off, off >> 8]
 

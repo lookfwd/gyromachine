@@ -42,8 +42,8 @@ pwm = PWM(bus)
 
 acc = Accelerometer(bus)
 
-write_to_file = True
-stream_to_kafka = False
+write_to_file = False
+stream_to_kafka = True
 if write_to_file:
     vv = []
 

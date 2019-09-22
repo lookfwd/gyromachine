@@ -1,8 +1,12 @@
 import smbus
 import time
 from timeit import default_timer as timer
-import csv
 from confluent_kafka import Producer
+import csv
+
+from pwmmotor import PWM
+from accel import Accelerometer
+
 
 bootstrap = 'pkc-4kgmg.us-west-2.aws.confluent.cloud:9092'
 kfus = 'EQDIKMXZGURYBP47'
@@ -31,45 +35,46 @@ def acked(err, msg):
 
 
 bus = smbus.SMBus(1)
-address = 0x68
 
-bus.write_byte_data(address, 0x6b, 0)  # Wakes up MPU-6050
+pwm = PWM(bus)
+pwm.set()
 
-ACCEL_CONFIG = bus.read_byte_data(address, 0x1c)
-ACCEL_CONFIG = ACCEL_CONFIG & 0xe7  # Clear AFS_SEL
-#AFS_SEL Full Scale Range
-#0 ± 2g
-#1 ± 4g
-#2 ± 8g
-#3 ± 16g
-ACCEL_CONFIG = ACCEL_CONFIG | (3 << 3)
-bus.write_byte_data(address, 0x1c, ACCEL_CONFIG)  # Wakes up MPU-6050
+acc = Accelerometer(bus)
 
-vv = []
+write_to_file = False
+stream_to_kafka = False
+if write_to_file:
+    vv = []
+
 i = 0
 t0 = timer()
 running = True
 while running:
-    v = bus.read_i2c_block_data(address, 0x3b, 14)
+    v = acc.read()
+
     msg = ",".join(str(i) for i in v)
-    #print(msg)
-    p.produce('engine', value=msg, callback=acked)
-    p.poll(0)
+    print(msg)
 
-    continue
+    if stream_to_kafka:
+        p.produce('engine', value=msg, callback=acked)
+        p.poll(0)
 
-    vv.append(v)
+    if write_to_file:
+        vv.append(v)
     i += 1
     if i % 10000 == 0:
+
         x = timer()
         print(10000 / (x - t0))
 
-        with open('measurements.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile)
-            for v in vv:
-                spamwriter.writerow(v)
-        vv = []
-        running = False
+        if write_to_file:
+            with open('measurements.csv', 'w', newline='') as csvfile:
+                spamwriter = csv.writer(csvfile)
+                for v in vv:
+                    spamwriter.writerow(v)
+            vv = []
+            running = False
+
         t0 = x
 
 #gyroskop_xout = read_word_2c(0x43)

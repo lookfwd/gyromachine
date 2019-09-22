@@ -1,34 +1,33 @@
 import smbus
 import time
 
-bus = smbus.SMBus(1)
-address = 0x40
+class PWM(object):
 
-LED0_ON_L = 6
-PCA9685_MODE1 = 0
-PCA9685_PRESCALE = 0xfe
+    def __init__(self, bus):
+        self.bus = bus
+        address = 0x40
 
-bus.write_byte_data(address, PCA9685_MODE1, 0x80)
+        LED0_ON_L = 6
+        PCA9685_MODE1 = 0
+        PCA9685_PRESCALE = 0xfe
 
-oldmode = bus.read_byte_data(address, PCA9685_MODE1)
-newmode = (oldmode & 0x7f) | 0x10
-bus.write_byte_data(address, PCA9685_MODE1, newmode)
-bus.write_byte_data(address, PCA9685_PRESCALE, 6)
-bus.write_byte_data(address, PCA9685_MODE1, oldmode)
-time.sleep(0.005)
-bus.write_byte_data(address, PCA9685_MODE1, oldmode | 0xa0)
-oldmode = bus.read_byte_data(address, PCA9685_MODE1)
+        self.bus.write_byte_data(address, PCA9685_MODE1, 0x80)
 
-on = 0
-off = 3395
+        oldmode = self.bus.read_byte_data(address, PCA9685_MODE1)
+        newmode = (oldmode & 0x7f) | 0x10
+        self.bus.write_byte_data(address, PCA9685_MODE1, newmode)
+        self.bus.write_byte_data(address, PCA9685_PRESCALE, 6)
+        self.bus.write_byte_data(address, PCA9685_MODE1, oldmode)
+        time.sleep(0.005)
+        self.bus.write_byte_data(address, PCA9685_MODE1, oldmode | 0xa0)
 
-data = [on, on >> 8, off, off >> 8]
+        #oldmode = self.bus.read_byte_data(address, PCA9685_MODE1)
 
-channel = 4
-bus.write_i2c_block_data(address, LED0_ON_L + (channel * 4), data)
+    def set(self, value):
+        on = 0
+        off = value
 
-#bear1 = bus.read_byte_data(address, 2)
-# bus.write_byte_data(address, 0, value)
+        data = [on, on >> 8, off, off >> 8]
 
-#time.sleep(3)
-
+        channel = 4
+        self.bus.write_i2c_block_data(address, LED0_ON_L + (channel * 4), data)

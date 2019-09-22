@@ -1,5 +1,6 @@
 import smbus
 import time
+import math
 from timeit import default_timer as timer
 from confluent_kafka import Producer
 import csv
@@ -31,58 +32,82 @@ def acked(err, msg):
     if err is not None:
         print("failed to deliver message: {}".format(err.str()))
     else:
-        print("produced to: {} [{}] @ {}".format(msg.topic(), msg.partition(), msg.offset()))
+        pass
+        #print("produced to: {} [{}] @ {}".format(msg.topic(), msg.partition(), msg.offset()))
 
 
 bus = smbus.SMBus(1)
 
 pwm = PWM(bus)
-pwm.set()
 
 acc = Accelerometer(bus)
 
-write_to_file = False
+write_to_file = True
 stream_to_kafka = False
 if write_to_file:
     vv = []
 
+BASE = 4095
+RATIO = 0.90
+
+RATIOS = [0.90, 0.95, 0.98]
+SPEEDS = [2., 3., 5., 7., 8., 10.]
+
+
+pwm.set(BASE)
+time.sleep(1)
+
 i = 0
 t0 = timer()
 running = True
+cycle = 0
+conf = 0
+last_x_sign = 0
+run = 0
 while running:
-    v = acc.read()
+    x, y, z = acc.read()
 
-    msg = ",".join(str(i) for i in v)
-    print(msg)
+    t = timer()
+
+    x_sign = 1 if x >= 0 else 0
+    if x_sign and not last_x_sign:
+        cycle += 1
+
+        if (cycle % 500) == 0:
+            run += 1
+            conf = (conf + 1) % (len(RATIOS) * len(SPEEDS))
+            print("running on conf: ", conf)
+
+        ratio = RATIOS[conf % len(RATIOS)]
+        speed = SPEEDS[conf // len(RATIOS)]
+
+        xv = int((ratio * BASE) +
+                 ((1. - ratio) * BASE * math.sin(float(cycle) / speed)))
+        pwm.set(xv)
+    last_x_sign = x_sign
+
+    msg = "%f:%d:%d:%d:%f,%f,%f" % (t, cycle, conf, run, x, y, z)
 
     if stream_to_kafka:
         p.produce('engine', value=msg, callback=acked)
         p.poll(0)
 
     if write_to_file:
-        vv.append(v)
+        vv.append(msg)
+
     i += 1
     if i % 10000 == 0:
 
-        x = timer()
-        print(10000 / (x - t0))
+        print(10000 / (t - t0))
 
         if write_to_file:
-            with open('measurements.csv', 'w', newline='') as csvfile:
-                spamwriter = csv.writer(csvfile)
+            with open('measurements.csv', 'w') as f:
                 for v in vv:
-                    spamwriter.writerow(v)
+                    f.write(v)
+                    f.write("\n")
             vv = []
             running = False
 
-        t0 = x
-
-#gyroskop_xout = read_word_2c(0x43)
-#gyroskop_yout = read_word_2c(0x45)
-#gyroskop_zout = read_word_2c(0x47)
- 
-#beschleunigung_xout = read_word_2c(0x3b)
-#beschleunigung_yout = read_word_2c(0x3d)
-#beschleunigung_zout = read_word_2c(0x3f)
-
+        t0 = t
+        i = 0
 

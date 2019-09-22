@@ -1,13 +1,16 @@
 import smbus
 import time
 
+
+address = 0x40
+LED0_ON_L = 6
+
+
 class PWM(object):
 
     def __init__(self, bus):
         self.bus = bus
-        address = 0x40
 
-        LED0_ON_L = 6
         PCA9685_MODE1 = 0
         PCA9685_PRESCALE = 0xfe
 

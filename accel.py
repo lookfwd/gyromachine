@@ -1,10 +1,12 @@
 import smbus
 
 
+address = 0x68
+
+
 class Accelerometer(object):
     def __init__(self, bus):
         self.bus = bus
-        address = 0x68
 
         self.bus.write_byte_data(address, 0x6b, 0)  # Wakes up MPU-6050
 

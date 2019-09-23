@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+export SPARK_HOME=/usr/local/spark
+export PYSPARK_DRIVER_PYTHON=jupyter
+export PYSPARK_DRIVER_PYTHON_OPTS='notebook --ip="*"'
+
+JAR_PATH=/usr/local/jars
+
+$SPARK_HOME/bin/pyspark --jars $JAR_PATH/spark-sql-kafka-0-10_2.11-2.4.4.jar,$JAR_PATH/kafka-clients-2.0.0.jar,$JAR_PATH/hadoop-aws-2.7.1.jar,$JAR_PATH/aws-java-sdk-1.7.4.jar

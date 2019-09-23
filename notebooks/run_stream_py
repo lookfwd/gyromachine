@@ -1,6 +1,6 @@
 # Runs Stream App
 
-JAR_PATH=$(pwd)/..
+JAR_PATH=/usr/local/jars
 
 jars=$JAR_PATH/spark-sql-kafka-0-10_2.11-2.4.4.jar,
 jars+=$JAR_PATH/kafka-clients-2.0.0.jar,

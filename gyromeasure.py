@@ -3,6 +3,7 @@ import time
 import math
 from timeit import default_timer as timer
 from confluent_kafka import Producer
+from lastrun import save_last_run, load_last_run
 import csv
 
 from pwmmotor import PWM
@@ -63,7 +64,7 @@ running = True
 cycle = 0
 conf = 0
 last_x_sign = 0
-run = 0
+run = load_last_run() + 1
 while running:
     x, y, z = acc.read()
 
@@ -75,6 +76,7 @@ while running:
 
         if (cycle % 500) == 0:
             run += 1
+            save_last_run(run)
             conf = (conf + 1) % (len(RATIOS) * len(SPEEDS))
             print("running on conf: ", conf)
 

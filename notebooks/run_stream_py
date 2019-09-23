@@ -1,0 +1,11 @@
+# Runs Stream App
+
+JAR_PATH=$(pwd)/..
+
+jars=$JAR_PATH/spark-sql-kafka-0-10_2.11-2.4.4.jar,
+jars+=$JAR_PATH/kafka-clients-2.0.0.jar,
+jars+=$JAR_PATH/hadoop-aws-2.7.1.jar,
+jars+=$JAR_PATH/aws-java-sdk-1.7.4.jar
+
+PYSPARK_DRIVER_PYTHON=python3 $SPARK_HOME/bin/spark-submit --jars $jars 3.stream.py
+

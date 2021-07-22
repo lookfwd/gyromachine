@@ -8,8 +8,8 @@ import re
 MAX_RUN = 255
 
 
-s3_access = 'AKIATDZBANSB554WL47H'
-s3_secret = '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'
+s3_access = '*'
+s3_secret = '*'
 
 
 def upload(target_file, object_name):
